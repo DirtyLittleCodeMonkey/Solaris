@@ -1,13 +1,16 @@
 import pygame
 from Utils import *
-import MainMenu
+import Menus
+import settings
 
-STATE = 'menu'
 RUNNING = True
 SCREEN = None
 RESOLUTION = None
+CURRENT_WINDOW = None
+
 
 def main():
+    pygame.font.init()
     read_settings()
     build_window()
     loop()
@@ -21,13 +24,9 @@ def build_window():
     pygame.display.set_icon(SCREEN)
     pygame.display.set_caption('Solaris')
     pygame.display.flip()
-    # Make the background of the game
-    BACKGROUND = pygame.Surface(SCREEN.get_size())
-    BACKGROUND.fill((0, 0, 0))
 
 
 def read_settings():
-    settings_file = None
     try:
         settings_file = open('config.txt', 'r')
     except:
@@ -48,12 +47,23 @@ def make_settings():
 
 
 def loop():
+    global CURRENT_WINDOW
+    game_clock = pygame.time.Clock()
     while RUNNING is True:
+        game_clock.tick(60)
         window_event_handler()
-        if STATE == 'menu':
-            MainMenu.render()
+        if CURRENT_WINDOW is None:
+            CURRENT_WINDOW = Menus.MainMenu
+        CURRENT_WINDOW.render()
 
 
+def render():
+    global SCREEN
+    # Commit changes to screen
+    pygame.display.flip()
+
+
+# Check if the user interacts with the window
 def window_event_handler():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
