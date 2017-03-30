@@ -72,7 +72,6 @@ def disp_menu():
     screen.blit(play_button, play_rect)
     screen.blit(quit_button, quit_rect)
     pygame.display.flip()
-    pygame.display.flip()
 
 
 def menu_event_handler():
