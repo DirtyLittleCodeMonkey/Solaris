@@ -16,9 +16,10 @@ action_listener = None
 resolution = None
 key_limiter = False
 
-testbody = None
+star_systems = []
+nearest_system = None
 player = None
-camera_pos = [0, 0]
+camera = None
 launch = False
 
 
@@ -28,9 +29,11 @@ def main():
 
 
 def init():
-    global screen, fonts, resolution
+    global screen, fonts, resolution, camera
     resx, resy = settings.get_resolution()
     resolution = [resx, resy]
+    # Create camera
+    camera = Camera([0, 0], 1, resolution)
     # Create the game screen
     screen = pygame.display.set_mode(resolution)
     # Set window info
@@ -46,14 +49,15 @@ def init():
     global current_menu
     current_menu = Menu.main_menu(fonts, resolution, action_listener)
 
-    global testbody
-    testbody = Bodies.generate_system([0, 0], action_listener)
+    global star_systems, nearest_system
+    star_systems = Bodies.generate_systems(5, action_listener)
+    nearest_system = star_systems[0]
 
     global player
     player = Bodies.Player([500, 500], (255, 100, 100), 3, [0, 0], action_listener)
 
     global current_hud
-    current_hud = HUD.test_hud(fonts, resolution, action_listener, testbody)
+    current_hud = HUD.test_hud(fonts, resolution, action_listener)
 
 
 def loop():
@@ -72,10 +76,22 @@ def loop():
 # Update game logic
 def update():
     key_listener()
-    global testbody, player
-    testbody.update(player)
+    global nearest_system, star_systems, player
+
+    for star in star_systems:
+        star.update(player)
+
     if player is not None:
+        # Find the system closest to the player to calculate gravity
+        current_dist = Utils.get_distance(nearest_system.pos, player.pos)
+        for star in star_systems:
+            star.update(player)
+            if Utils.get_distance(star.pos, player.pos) < current_dist:
+                nearest_system = star
+        nearest_system.trajectory_predict(0, player.pos, player.vel)
+
         player.update()
+        player.predict_trajectory(nearest_system, 500)
 
 
 # Draw elements to the screen
@@ -85,10 +101,13 @@ def render():
     background.fill((0, 0, 0))
     screen.blit(background, (0, 0))
 
-    testbody.render(screen, camera_pos)
-    if player is not None:
-        player.render(screen, camera_pos)
+    for star in star_systems:
+        star.render(screen, camera)
 
+    if player is not None:
+        player.render(screen, camera)
+
+    current_hud.elements[0].text = 'Zoom level: ' + str(round(camera.zoom, 2))
     current_hud.render(screen)
 
     pygame.display.flip()
@@ -132,6 +151,19 @@ def key_listener():
         else:
             launch = False
 
+    # Change camera zoom
+    global camera
+    if keys_down[pygame.K_PERIOD]:
+        if key_limiter is False:
+            key_limiter = True
+            camera.zoom += 0.1
+    if keys_down[pygame.K_COMMA]:
+        if key_limiter is False:
+            key_limiter = True
+            camera.zoom -= 0.1
+    if camera.zoom < 0.1:
+        camera.zoom = 0.1
+
 
 # Allows objects outside this module to run commands
 class ActionListener:
@@ -139,7 +171,7 @@ class ActionListener:
         self.command = ''
 
     def run(self, command, params=None):
-        global current_menu, display_menu, running, player, testbody, camera_pos, current_hud, launch
+        global current_menu, display_menu, running, player, testbody, camera, current_hud, launch
         if command == 'play':
             display_menu = False
         elif command == 'quit':
@@ -157,6 +189,9 @@ class ActionListener:
         elif command == 'pause':
             display_menu = True
             current_menu = Menu.pause_menu(fonts, resolution, action_listener)
+        elif command == 'controls':
+            display_menu = True
+            current_menu = Menu.controls_menu(fonts, resolution, action_listener)
         elif command == 'deleteplayer':
             player = None
         elif command == 'spawnplayer':
@@ -167,17 +202,29 @@ class ActionListener:
             current_hud = HUD.test_hud(fonts, resolution, action_listener, testbody)
             display_menu = False
         elif command == 'camerafollow':
-            camera_pos = params[0]
-            camera_pos = [camera_pos[0] - resolution[0]/2, camera_pos[1] - resolution[1]/2]
+            camera.pos = [(params[0][0] - resolution[0]/2), (params[0][1] - resolution[1]/2)]
         elif command == 'launchplayer':
             if launch is True:
                 planet = params[0]
                 mouse_pos = pygame.mouse.get_pos()
                 pos = [planet.pos[0], planet.pos[1]]
-                vel = [(camera_pos[0] + mouse_pos[0])/100, (camera_pos[1] + mouse_pos[1])/100]
-                player = Bodies.Player(pos, (255, 100, 100), 3, vel, action_listener)
+                direction = Utils.normalize([mouse_pos[0] - resolution[0]/2, mouse_pos[1] - resolution[1]/2])
+                player = Bodies.Player(pos, (255, 100, 100), 3, direction, action_listener)
                 planet.is_player = False
                 launch = False
+
+
+class Camera:
+    def __init__(self, pos, zoom, resolution):
+        self.pos = pos
+        self.zoom = zoom
+        self.resolution = resolution
+
+    def pos_to_camera(self, pos):
+        new_x = round(((pos[0] - self.pos[0]) * self.zoom) + (self.resolution[0]/2) * (1 - self.zoom))
+        new_y = round(((pos[1] - self.pos[1]) * self.zoom) + (self.resolution[1]/2) * (1 - self.zoom))
+        new_pos = [new_x, new_y]
+        return new_pos
 
 
 def window_event_handler():

@@ -83,16 +83,10 @@ class HUDRect:
         pygame.draw.rect(screen, self.color, rect, self.border_width)
 
 
-def test_hud(fonts, resolution, action_listener, star):
+def test_hud(fonts, resolution, action_listener):
     hud = HUD()
-    num_moons = 0
-    num_planets = 0
-    for planet in star.children:
-        num_planets += 1
-        for moon in planet.children:
-            num_moons += 1
-    system_count = 'Planets: ' + str(num_planets) + ' Moons: ' + str(num_moons)
-    hud.elements.append(HUDText(fonts, system_count, [resolution[0]/2, 30]))
+    zoom_indication = 'Zoom level: '
+    hud.elements.append(HUDText(fonts, zoom_indication, [resolution[0]/2, 30]))
     hud.elements.append(HUDButton(fonts, 'Quit', [40, resolution[1] - 40], action_listener, 'quit'))
     hud.elements.append(HUDButton(fonts, 'Pause', [120, resolution[1] - 40], action_listener, 'pause'))
     return hud

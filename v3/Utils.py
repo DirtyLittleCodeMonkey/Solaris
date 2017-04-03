@@ -11,3 +11,16 @@ def get_distance(pos1, pos2):
     disty = abs(pos1[1] - pos2[1])
     dist = math.sqrt((distx**2) + (disty**2))
     return dist
+
+
+def normalize(vector):
+    mag = math.sqrt(vector[0]**2 + vector[1]**2)
+    norm = [vector[0]/mag, vector[1]/mag]
+    return norm
+
+
+def round_list(some_list):
+    new_list = []
+    for item in some_list:
+        new_list.append(round(item))
+    return new_list
