@@ -50,7 +50,7 @@ def init():
     current_menu = Menu.main_menu(fonts, resolution, action_listener)
 
     global star_systems, nearest_system
-    star_systems = Bodies.generate_systems(5, action_listener)
+    star_systems = Bodies.generate_systems(10, action_listener)
     nearest_system = star_systems[0]
 
     global player
@@ -82,12 +82,13 @@ def update():
         star.update(player)
 
     if player is not None:
-        # Find the system closest to the player to calculate gravity
+        # Find nearest star
         current_dist = Utils.get_distance(nearest_system.pos, player.pos)
         for star in star_systems:
             star.update(player)
             if Utils.get_distance(star.pos, player.pos) < current_dist:
                 nearest_system = star
+        # Apply gravity from nearest system
         nearest_system.trajectory_predict(0, player.pos, player.vel)
 
         player.update()
@@ -154,15 +155,9 @@ def key_listener():
     # Change camera zoom
     global camera
     if keys_down[pygame.K_PERIOD]:
-        if key_limiter is False:
-            key_limiter = True
-            camera.zoom += 0.1
+        camera.change_zoom(True)
     if keys_down[pygame.K_COMMA]:
-        if key_limiter is False:
-            key_limiter = True
-            camera.zoom -= 0.1
-    if camera.zoom < 0.1:
-        camera.zoom = 0.1
+        camera.change_zoom(False)
 
 
 # Allows objects outside this module to run commands
@@ -171,7 +166,7 @@ class ActionListener:
         self.command = ''
 
     def run(self, command, params=None):
-        global current_menu, display_menu, running, player, testbody, camera, current_hud, launch
+        global current_menu, display_menu, running, player, camera, current_hud, launch, star_systems
         if command == 'play':
             display_menu = False
         elif command == 'quit':
@@ -195,11 +190,11 @@ class ActionListener:
         elif command == 'deleteplayer':
             player = None
         elif command == 'spawnplayer':
-            player = Bodies.Player(params[0], params[1], params[2], params[3])
+            player = Bodies.Player(params[0], params[1], params[2], params[3], action_listener)
         elif command == 'gensystem':
-            testbody = Bodies.generate_system([0,0], action_listener)
+            star_systems = Bodies.generate_systems(10, action_listener)
             player = Bodies.Player([500, 500], (255, 100, 100), 3, [0, 0], action_listener)
-            current_hud = HUD.test_hud(fonts, resolution, action_listener, testbody)
+            camera = Camera([0, 0], 1, resolution)
             display_menu = False
         elif command == 'camerafollow':
             camera.pos = [(params[0][0] - resolution[0]/2), (params[0][1] - resolution[1]/2)]
@@ -215,16 +210,25 @@ class ActionListener:
 
 
 class Camera:
-    def __init__(self, pos, zoom, resolution):
+    def __init__(self, pos, zoom, res):
         self.pos = pos
         self.zoom = zoom
-        self.resolution = resolution
+        self.resolution = res
 
     def pos_to_camera(self, pos):
         new_x = round(((pos[0] - self.pos[0]) * self.zoom) + (self.resolution[0]/2) * (1 - self.zoom))
         new_y = round(((pos[1] - self.pos[1]) * self.zoom) + (self.resolution[1]/2) * (1 - self.zoom))
         new_pos = [new_x, new_y]
         return new_pos
+
+    def change_zoom(self, positive):
+        step = 0.05 * self.zoom
+        if positive is True:
+            self.zoom += step
+        else:
+            self.zoom -= step
+        if self.zoom < 0.01:
+            self.zoom = 0.01
 
 
 def window_event_handler():
