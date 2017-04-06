@@ -29,13 +29,16 @@ class Body:
     def update(self, player):
 
         if self.is_player is True:
+            # Follow with camera
             self.action_listener.run('camerafollow', [self.pos])
+            # Launch player
+            self.action_listener.run('launchplayer', [self])
 
         # Run child code
         for child in self.children:
             child.update(player)
 
-        # Interact with player
+        # Hit detect for the player
         if player is not None:
             if self.action_listener is not None and self.hit_detect(player.pos) is True and player.interaction_timeout == 0:
                 self.is_player = True
@@ -45,9 +48,6 @@ class Body:
         if self.parent is not None:
             self.counter += self.parent.gravity / (self.orbit_radius ** 2)
             self.pos = self.tick_pos(self.counter)
-
-        if self.is_player is True:
-            self.action_listener.run('launchplayer', [self])
 
     # Calculate position and gravity on an object in the future
     def trajectory_predict(self, ticks_in_future, obj_pos, obj_vel):
@@ -93,12 +93,15 @@ class Body:
         if self.parent is not None and self.orbit_radius > 0:
             parent_pos = camera.pos_to_camera(self.parent.pos)
             size = round(self.orbit_radius * camera.zoom)
-            pygame.draw.circle(screen, (100, 100, 100), parent_pos, size, 1)
+            if size > 1:
+                pygame.draw.circle(screen, (100, 100, 100), parent_pos, size, 1)
 
         # Draw body
         pos = camera.pos_to_camera(self.pos)
         size = round(self.radius * camera.zoom)
-        pygame.draw.circle(screen, self.color, pos, size)
+        # Check if the body is on screen
+        if -size <= pos[0] <= camera.resolution[0] + size and -size <= pos[1] <= camera.resolution[1] + size:
+            pygame.draw.circle(screen, self.color, pos, size)
 
         # Render children
         for child in self.children:
@@ -189,10 +192,18 @@ def generate_system(pos, action_listener):
 
 
 def generate_systems(number, action_listener):
-    stars = []
-    for i in range(0, number):
-        star = generate_system([randint(-4000 * i, 4000 * i), randint(-4000 * i, 4000 * i)], action_listener)
-        stars.append(star)
+    # Make a several systems that are spaced apart from each other
+    stars = [generate_system([0, 0], action_listener)]
+    counter = 0
+    while len(stars) < number:
+        counter += 1
+        star = generate_system([randint(-4000 * counter, 4000 * counter), randint(-4000 * counter, 4000 * counter)], action_listener)
+        too_close = False
+        for existing_star in stars:
+            if Utils.get_distance(existing_star.pos, star.pos) < 3000:
+                too_close = True
+        if too_close is False:
+            stars.append(star)
     return stars
     
     
