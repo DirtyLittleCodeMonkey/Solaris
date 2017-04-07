@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Game1 {
 
-    class Camera {
+    public class Camera {
 
         public Vector2 pos;
         public float zoom;
