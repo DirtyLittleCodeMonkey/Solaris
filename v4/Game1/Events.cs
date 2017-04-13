@@ -24,6 +24,9 @@ namespace Events {
             else if (e.command == "pause") {
                 game1.menuHandler.currentMenu = game1.menuHandler.pauseMenu;
             }
+            else if (e.command == "play") {
+                game1.menuHandler.displayMenu = false;
+            }
             else if (e.command == "settings") {
                 game1.menuHandler.currentMenu = game1.menuHandler.settingsMenu;
             }

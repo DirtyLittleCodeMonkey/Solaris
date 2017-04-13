@@ -65,8 +65,11 @@ namespace Game1 {
 
 
         protected override void Update(GameTime gameTime) {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+            // Escape key listener
+            if ((GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape)) && menuHandler.displayMenu == false) {
+                menuHandler.displayMenu = true;
+                menuHandler.currentMenu = menuHandler.pauseMenu;
+            }
 
             if (running == false) {
                 this.Exit();
@@ -74,24 +77,34 @@ namespace Game1 {
                 return;
             }
 
-            if (menuHandler.update() == true) {
-                // Menu was updated (game is paused)
+            // If the menu is being displayed, dont update the game
+            if (menuHandler.displayMenu == true) {
+                // Menu render logic
+                menuHandler.update();
+                base.Update(gameTime);
+                return;
             }
 
 
+            // Game logic goes here
             base.Update(gameTime);
+
         }
 
 
-        protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.Black);
-
-            // TODO: Add your drawing code here
-            spriteBatch.Begin();
-
-            if (menuHandler.render(spriteBatch) == true) {
-                // Menu rendered, do not display game
+        protected override void Draw(GameTime gameTime) { 
+            
+            // If menu is being rendered, dont render the game
+            if (menuHandler.displayMenu == true) {
+                GraphicsDevice.Clear(Color.Black);
+                spriteBatch.Begin();
+                menuHandler.render(spriteBatch);
+                spriteBatch.End();
+                base.Draw(gameTime);
+                return;
             }
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            spriteBatch.Begin();
 
             spriteBatch.End();
 

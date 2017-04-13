@@ -59,7 +59,7 @@ namespace Menus {
             MenuButton[] menuButtons = new MenuButton[3];
             // Play button
             Vector2 playButtonPos = new Vector2(camera.resolution.X / 2, camera.resolution.Y / 2 - 50);
-            MenuButton playButton = new MenuButton(this.fonts[2], "Play", playButtonPos, Color.White, Color.Green, new ButtonEventArgs("pause"));
+            MenuButton playButton = new MenuButton(this.fonts[2], "Play", playButtonPos, Color.White, Color.Green, new ButtonEventArgs("play"));
             playButton.ButtonClicked += ButtonEvents.changeMenu;
             menuButtons[0] = playButton;
             // Settings button
@@ -85,12 +85,17 @@ namespace Menus {
             MenuText titleSplash = new MenuText(this.fonts[4], "Pause", titleSplashPos, Color.White);
             menuText[0] = titleSplash;
             // Make menu buttons
-            MenuButton[] menuButtons = new MenuButton[1];
+            MenuButton[] menuButtons = new MenuButton[2];
             // Play button
-            Vector2 playButtonPos = new Vector2(camera.resolution.X / 2, camera.resolution.Y / 2);
-            MenuButton playButton = new MenuButton(this.fonts[2], "Resume", playButtonPos, Color.White, Color.Green, new ButtonEventArgs("mainmenu"));
+            Vector2 playButtonPos = new Vector2(camera.resolution.X / 2, camera.resolution.Y / 2 - 25);
+            MenuButton playButton = new MenuButton(this.fonts[2], "Resume", playButtonPos, Color.White, Color.Green, new ButtonEventArgs("play"));
             playButton.ButtonClicked += Events.ButtonEvents.changeMenu;
             menuButtons[0] = playButton;
+            // Main menu button
+            Vector2 returnToMenuPos = new Vector2(camera.resolution.X / 2, camera.resolution.Y / 2 + 25);
+            MenuButton returnToMenuButton = new MenuButton(this.fonts[2], "Return to menu", returnToMenuPos, Color.White, Color.Green, new ButtonEventArgs("mainmenu"));
+            returnToMenuButton.ButtonClicked += Events.ButtonEvents.changeMenu;
+            menuButtons[1] = returnToMenuButton;
             // Make and return menu object
             Menu pauseMenu = new Menu(menuText, menuButtons);
             return pauseMenu;
@@ -140,12 +145,9 @@ namespace Menus {
             this.displayMenu = true;
         }
 
-        public bool update() {
-            if (this.displayMenu == false) {
-                return true;
-            }
+        public void update() {
             currentMenu.update();
-            return false;
+            return;
         }
 
         public bool render(SpriteBatch spriteBatch) {
